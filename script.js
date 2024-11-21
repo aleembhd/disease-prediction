@@ -35,11 +35,89 @@ fileInput.addEventListener('change', (e) => {
 
 cameraButton.addEventListener('click', async () => {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        // Handle camera stream
+        // Create video element for camera stream
+        const videoElement = document.createElement('video');
+        videoElement.style.display = 'block';
+        videoElement.style.maxWidth = '100%';
+        videoElement.style.margin = '20px auto';
+        videoElement.autoplay = true;
+        
+        // Create canvas for capturing the image
+        const canvas = document.createElement('canvas');
+        
+        // Create capture button
+        const captureBtn = document.createElement('button');
+        captureBtn.textContent = 'Capture Photo';
+        captureBtn.className = 'camera-button';
+        
+        // Create container for camera UI
+        const cameraContainer = document.createElement('div');
+        cameraContainer.style.position = 'fixed';
+        cameraContainer.style.top = '0';
+        cameraContainer.style.left = '0';
+        cameraContainer.style.width = '100%';
+        cameraContainer.style.height = '100%';
+        cameraContainer.style.backgroundColor = '#fff';
+        cameraContainer.style.zIndex = '1000';
+        cameraContainer.style.padding = '20px';
+        cameraContainer.style.boxSizing = 'border-box';
+        
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '×';
+        closeBtn.style.position = 'absolute';
+        closeBtn.style.right = '20px';
+        closeBtn.style.top = '20px';
+        closeBtn.style.fontSize = '24px';
+        closeBtn.style.border = 'none';
+        closeBtn.style.background = 'none';
+        closeBtn.style.cursor = 'pointer';
+        
+        // Add elements to container
+        cameraContainer.appendChild(closeBtn);
+        cameraContainer.appendChild(videoElement);
+        cameraContainer.appendChild(captureBtn);
+        document.body.appendChild(cameraContainer);
+        
+        // Get camera stream
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment', // Use back camera on mobile
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            } 
+        });
+        videoElement.srcObject = stream;
+        
+        // Handle capture button click
+        captureBtn.onclick = () => {
+            // Set canvas dimensions to match video
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            
+            // Draw video frame to canvas
+            canvas.getContext('2d').drawImage(videoElement, 0, 0);
+            
+            // Convert to image
+            const imageData = canvas.toDataURL('image/jpeg');
+            previewImage.src = imageData;
+            previewImage.style.display = 'block';
+            analyzeBtn.style.display = 'flex';
+            
+            // Clean up
+            stream.getTracks().forEach(track => track.stop());
+            cameraContainer.remove();
+        };
+        
+        // Handle close button click
+        closeBtn.onclick = () => {
+            stream.getTracks().forEach(track => track.stop());
+            cameraContainer.remove();
+        };
+        
     } catch (err) {
         console.error('Error accessing camera:', err);
-        alert('Unable to access camera');
+        alert('Unable to access camera. Please make sure you have granted camera permissions.');
     }
 });
 
